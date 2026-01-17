@@ -160,6 +160,7 @@ v=200
     model = 'model'
     verbose = true
     moose_input_kernels = 'strain'
+    advance_step_on_device = true
 
     moose_input_types = 'POSTPROCESSOR POSTPROCESSOR POSTPROCESSOR'
     moose_inputs = '     time          time          temperature'
