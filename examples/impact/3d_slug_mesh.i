@@ -161,6 +161,7 @@ v=200
     verbose = true
     moose_input_kernels = 'strain'
     advance_step_on_device = true
+    debug_inputs_on_failure = true
 
     moose_input_types = 'POSTPROCESSOR POSTPROCESSOR POSTPROCESSOR'
     moose_inputs = '     time          time          temperature'

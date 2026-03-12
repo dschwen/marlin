@@ -8,10 +8,11 @@
 
 [Solvers]
   [newton]
-    type = Newton
+    type = NewtonWithLineSearch
     abs_tol = 1e-8
     rel_tol = 1e-6
-    max_its = 20
+    max_its = 50
+    verbose = true
   []
 []
 
@@ -42,7 +43,6 @@
   [trial_state]
     type = ComposedModel
     models = 'trial_elastic_strain cauchy_stress flow_direction'
-    additional_outputs = 'state/S'
   []
 
   ###############################################################################
@@ -128,6 +128,7 @@
   [model]
     type = ComposedModel
     # models = 'trial_state radial_return plastic_update stress_update vonmises jc_flowrate'
-    models = 'trial_state radial_return'
+    models = 'trial_state radial_return plastic_update stress_update'
+    additional_outputs = 'state/Ep state/ep'
   []
 []
