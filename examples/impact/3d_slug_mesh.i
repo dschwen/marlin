@@ -72,7 +72,7 @@ v=200
   [extrude]
     type = AdvancedExtruderGenerator
     input = rotate_x_90
-    direction = '0 1 0'
+    direction = '0 -1 0'
     heights = '${units 3 in -> m}'
     num_layers = 50 # adjust for mesh resolution
   []
