@@ -1,7 +1,9 @@
 # Johnson-Cook rate-dependent plasticity model for NEML2
 #
-# This model implements the Johnson-Cook constitutive equation using
-# the inverted form to compute strain rate from stress.
+# Uses the inverted Johnson-Cook flow rule inside a backward-Euler update.
+# A rate-independent return-mapping predictor is used as the Newton initial
+# guess so the local solve starts near the plastic branch when the trial stress
+# is far above yield, while the original elastic branch is preserved.
 #
 # Material parameters are for OFHC Copper (Cu):
 # Source: Appl. Sci. 2020, 10, 2423; doi:10.3390/app10072423
@@ -9,10 +11,21 @@
 [Solvers]
   [newton]
     type = NewtonWithLineSearch
+    linear_solver = 'lu'
     abs_tol = 1e-8
     rel_tol = 1e-6
     max_its = 50
     verbose = true
+  []
+  [lu]
+    type = DenseLU
+  []
+[]
+
+[EquationSystems]
+  [eq_sys]
+    type = NonlinearSystem
+    model = 'rate'
   []
 []
 
@@ -95,14 +108,14 @@
     use_temperature = true
     flow_rate = state/ep_rate
     # OFHC Copper parameters
-    A = 99.7e6          # Reference yield stress (Pa)
-    B = 262.8e6         # Hardening coefficient (Pa)
-    n = 0.23            # Strain hardening exponent
-    C = 0.029           # Rate sensitivity coefficient
-    m = 0.98            # Temperature sensitivity exponent
-    reference_strain_rate = 1.0  # Reference strain rate (1/s)
-    reference_temperature = 300  # Reference temperature (K)
-    melting_temperature = 1338   # Melting temperature (K)
+    A = 99.7e6
+    B = 262.8e6
+    n = 0.23
+    C = 0.029
+    m = 0.98
+    reference_strain_rate = 1.0
+    reference_temperature = 300
+    melting_temperature = 1338
   []
   [integrate_ep]
     type = ScalarBackwardEulerTimeIntegration
@@ -118,8 +131,24 @@
   []
   [radial_return]
     type = ImplicitUpdate
-    implicit_model = 'rate'
+    equation_system = 'eq_sys'
     solver = 'newton'
+    initial_guess_model = 'ep_predictor'
+  []
+
+  ###############################################################################
+  # Rate-independent return-mapping predictor for Newton warm start.
+  # Solves R_RI(dep) = s_trial - 3G*dep - sigma_y(ep_old + dep) = 0 via Newton
+  # to get an accurate initial guess (above yield, near the actual solution).
+  ###############################################################################
+  [ep_predictor]
+    type = JohnsonCookEPPredictor
+    # inputs use default names: forces/E, old_state/Ep, old_state/ep -> state/ep
+    A = 99.7e6
+    B = 262.8e6
+    n = 0.23
+    youngs_modulus = 70e9
+    poissons_ratio = 0.28
   []
 
   ###############################################################################
@@ -127,7 +156,6 @@
   ###############################################################################
   [model]
     type = ComposedModel
-    # models = 'trial_state radial_return plastic_update stress_update vonmises jc_flowrate'
     models = 'trial_state radial_return plastic_update stress_update'
     additional_outputs = 'state/Ep state/ep'
   []
